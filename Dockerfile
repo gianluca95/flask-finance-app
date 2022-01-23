@@ -1,6 +1,12 @@
-FROM continuumio/anaconda3:2020.11
+# syntax=docker/dockerfile:1
 
-ADD . /code
-WORKDIR /code
+FROM python:3.8-slim-buster
 
-ENTRYPOINT [ "python", "app.py" ]
+WORKDIR /python-docker
+
+COPY requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
+
+COPY . .
+
+CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
