@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="col-md-4 offset-md-4">
+    <div class="card card-body">
+        <form action="/update/{{ cuenta.0 }}" method="POST">
+            <div class="form-group">
+                <input type="text" name="id_cuenta" placeholder="ID cuenta" value="{{ cuenta.0 }}" class="form-control">
+            </div>
+            <div class="from-group">
+                <input type="text" name="nombre_cuenta" placeholder="Nombre cuenta" value="{{ cuenta.1 }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <input type="text" name="tipo_cuenta" placeholder="Tipo de cuenta" value="{{ cuenta.2 }}" class="form-control">
+            </div>    
+            <div class="form-group">
+                <input type="text" name="moneda_cuenta" placeholder="Moneda" value="{{ cuenta.3 }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <input type="text" name="saldo_inicial_cuenta" placeholder="Saldo inicial" value="{{ cuenta.4 }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <input type="text" name="api_cuenta" placeholder="Tiene API?" value="{{ cuenta.5 }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-success btn-block form-control">
+                    Save
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock body %}

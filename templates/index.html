@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="row">
+    <div class="col-md-5">
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="card card-body">
+            <form action="/add_cuenta" method = "POST">
+                <div class="form-group">
+                    <input type="text" name="id_cuenta", placeholder="ID cuenta" class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="nombre_cuenta", placeholder="Nombre cuenta" class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="tipo_cuenta", placeholder="Tipo de cuenta" class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="moneda_cuenta", placeholder="Moneda" class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="saldo_inicial_cuenta", placeholder="Saldo inicial" class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="api_cuenta", placeholder="Tiene API?" class="form-control">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block form-control">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <table class="table table-striped table-bordered bg-white table-sm">
+            <thead>
+                <tr>
+                    <td>ID Cuenta</td>
+                    <td>Nombre</td>
+                    <td>Tipo</td>
+                    <td>Moneda</td>
+                    <td>Saldo inicial</td>
+                    <td>API</td>
+                    <td>Operaciones</td>
+                </tr>
+                <tbody>
+                    {% for cuenta in cuentas %}
+                        <tr>
+                            <td>{{ cuenta.0 }}</td>
+                            <td>{{ cuenta.1 }}</td>
+                            <td>{{ cuenta.2 }}</td>
+                            <td>{{ cuenta.3 }}</td>
+                            <td>{{ cuenta.4 }}</td>
+                            <td>{{ cuenta.5 }}</td>
+                            <td>
+                                <a href="/edit/{{ cuenta.0 }}" class="btn btn-secondary">Editar</a>
+                                <a href="/delete/{{ cuenta.0 }}" class="btn btn-danger btn-delete">Eliminar</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </thead>
+        </table>
+    </div>
+</div>
+
+{% endblock body %}
