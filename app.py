@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flaskext.mysql import MySQL
+import os
 
 app = Flask(__name__)
 
@@ -81,4 +82,5 @@ def delete_movement(id):
     return redirect(url_for('Index'))
 
 if __name__ == '__main__':
-    app.run(port = 5000, debug = False)
+    port = os.environ.get("PORT", 5000)
+    app.run(debug = False, host = "0.0.0.0", port = port)
