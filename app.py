@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 DATABASE_URL = 'postgres://ljpzyeyhsezyyx:bea90a2034fd8c851ded7cb2e4c9af42d32b970de7dee73897845271f2814162@ec2-3-222-49-168.compute-1.amazonaws.com:5432/d3vf1d6sf9d9nc'
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+conn.rollback()
 
 # app.config['MYSQL_DATABASE_USER'] = 'admin'
 # app.config['MYSQL_DATABASE_PASSWORD'] = '1234'
