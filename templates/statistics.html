@@ -1,38 +1,57 @@
 {% extends "layout.html" %}
 
 {% block body %}
-<h1>Statistics</h1>
-<canvas id="categoryChart" width="400" height="200"></canvas>
+<h1 class="mb-4">Statistics</h1>
 
-<!-- Include Chart.js from CDN -->
+<!-- Category Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Spending by Category</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="categoryChart"></canvas>
+    </div>
+</div>
+
+<!-- Monthly Spending Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Monthly Spending</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="monthlyChart"></canvas>
+    </div>
+</div>
+
+<!-- Monthly Spending Table -->
+<div class="card">
+    <div class="card-header">
+        <h5>Monthly Spending Details</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month, amount in monthly_data %}
+                    <tr>
+                        <td>{{ month }}</td>
+                        <td>{{ "{:.2f}".format(amount) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Get data passed from Flask
-    const categories = {{ categories | tojson }};
-    const amounts = {{ amounts | tojson }};
-
-    // Create the chart
-    const ctx = document.getElementById('categoryChart').getContext('2d');
-    const categoryChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: categories,
-            datasets: [{
-                label: 'Total Amount Spent per Category',
-                data: amounts,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
+    // Existing Chart.js scripts for rendering charts
 </script>
 {% endblock %}

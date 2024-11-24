@@ -104,17 +104,34 @@ def delete_transaction(id):
 @app.route('/statistics')
 def statistics():
     cur = mysql.get_db().cursor()
+
     # Query to get total amount spent per category
     cur.execute("""
         SELECT category, SUM(amount)
         FROM transactions
         GROUP BY category
     """)
-    data = cur.fetchall()
-    # Prepare data for the chart
-    categories = [row[0] for row in data]
-    amounts = [float(row[1]) for row in data]
-    return render_template('statistics.html', categories=categories, amounts=amounts)
+    category_data = cur.fetchall()
+    categories = [row[0] for row in category_data]
+    category_amounts = [float(row[1]) for row in category_data]
+
+    # Query to get total amount spent per month
+    cur.execute("""
+        SELECT DATE_FORMAT(date, '%Y-%m') AS month, SUM(amount) as total_amount
+        FROM transactions
+        GROUP BY month
+        ORDER BY month ASC
+    """)
+    monthly_data = cur.fetchall()
+    months = [row[0] for row in monthly_data]
+    monthly_amounts = [float(row[1]) for row in monthly_data]
+
+    return render_template('statistics.html',
+                           categories=categories,
+                           category_amounts=category_amounts,
+                           months=months,
+                           monthly_amounts=monthly_amounts,
+                           monthly_data=monthly_data)
 
 # Routes to manage categories
 @app.route('/categories')
