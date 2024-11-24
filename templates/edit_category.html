@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1>Edit Category</h1>
+    <form action="{{ url_for('edit_category', id=category[0]) }}" method="post">
+        <div class="mb-3">
+            <label for="name" class="form-label">Category Name:</label>
+            <input type="text" name="name" class="form-control" value="{{ category[1] }}" required>
+        </div>
+        <button type="submit" class="btn btn-success">Update Category</button>
+        <a href="{{ url_for('categories') }}" class="btn btn-secondary">Back to Categories</a>
+    </form>
+</div>
+{% endblock %}

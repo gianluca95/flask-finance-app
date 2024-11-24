@@ -1,97 +1,176 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-# from flaskext.mysql import MySQL
-# from flask_sqlalchemy import SQLAlchemy
-import psycopg2
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flaskext.mysql import MySQL
 import os
 
 app = Flask(__name__)
 
-DATABASE_URL = 'postgres://ljpzyeyhsezyyx:bea90a2034fd8c851ded7cb2e4c9af42d32b970de7dee73897845271f2814162@ec2-3-222-49-168.compute-1.amazonaws.com:5432/d3vf1d6sf9d9nc'
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-conn.rollback()
+# Database configuration
+app.config['MYSQL_DATABASE_USER'] = 'admin'
+app.config['MYSQL_DATABASE_PASSWORD'] = '1234'
+app.config['MYSQL_DATABASE_DB'] = 'flask-app'
+app.config['MYSQL_DATABASE_HOST'] = '127.0.0.1'
+mysql = MySQL(app,
+                 prefix="my_database",
+                 host="127.0.0.1",
+                 user="admin",
+                 password="1234",
+                 db="flask-app",
+                 autocommit=True)
+mysql.init_app(app)
 
-# app.config['MYSQL_DATABASE_USER'] = 'admin'
-# app.config['MYSQL_DATABASE_PASSWORD'] = '1234'
-# app.config['MYSQL_DATABASE_DB'] = 'flask-app'
-# app.config['MYSQL_DATABASE_HOST'] = '127.0.0.1'
-# mysql = MySQL(app, 
-#              prefix = "my_database", 
-#              host = "127.0.0.1", 
-#              user = "admin", 
-#              password = "1234", 
-#              db = "flask-app", 
-#              autocommit = True)
-# mysql.init_app(app)
+app.secret_key = 'mysecretkey'
 
-# app.secret_key = 'mysecretkey'
-
+# Main route showing transactions
 @app.route('/')
-def Index():
-    # cur = mysql.get_db().cursor()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM cuentas')
-    data = cur.fetchall()
-    return render_template('index.html', cuentas = data)
+def index():
+    cur = mysql.get_db().cursor()
+    # Fetch transactions
+    cur.execute('SELECT * FROM transactions')
+    transactions = cur.fetchall()
+    # Fetch categories
+    cur.execute('SELECT name FROM categories')
+    categories_data = cur.fetchall()
+    categories = [row[0] for row in categories_data]
+    return render_template('index.html', transactions=transactions, categories=categories)
 
-@app.route('/add_cuenta', methods = ['POST'])
-def add_cuenta():
+# Route to add a new transaction
+@app.route('/add_transaction', methods=['POST'])
+def add_transaction():
     if request.method == 'POST':
-        id_cuenta = request.form['id_cuenta']
-        nombre_cuenta = request.form['nombre_cuenta']
-        tipo_cuenta = request.form['tipo_cuenta']
-        moneda_cuenta = request.form['moneda_cuenta']
-        saldo_inicial_cuenta = request.form['saldo_inicial_cuenta']
-        api_cuenta = request.form['api_cuenta']
+        description = request.form['description']
+        category = request.form['category']
+        amount = request.form['amount']
+        date = request.form['date']
 
-        # cur = mysql.get_db().cursor()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO cuentas (cuenta_id, cuenta_nombre, cuenta_tipo, cuenta_moneda, cuenta_saldo_inicial, cuenta_api) VALUES (%s, %s, %s, %s, %s, %s)', 
-                    (id_cuenta, nombre_cuenta, tipo_cuenta, moneda_cuenta, saldo_inicial_cuenta, api_cuenta))
-        # mysql.connection.commit()
-        flash('Cuenta agregada satisfactoriamente')
-        return redirect(url_for('Index'))
+        cur = mysql.get_db().cursor()
+        # Optionally, you can check if the category exists in the categories table
+        cur.execute('SELECT category_id FROM categories WHERE name = %s', (category,))
+        category_data = cur.fetchone()
+        if category_data:
+            category_id = category_data[0]
+        else:
+            # If category doesn't exist, you can choose to add it automatically or return an error
+            cur.execute('INSERT INTO categories (name) VALUES (%s)', (category,))
+            mysql.get_db().commit()
+            category_id = cur.lastrowid
 
-@app.route('/edit/<id>')
-def get_cuenta(id):
-    # cur = mysql.get_db().cursor()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM cuentas WHERE cuenta_id = '%s'"%(id))
-    data = cur.fetchall()
-    return render_template('edit_cuentas.html', cuenta = data[0])
+        # Insert the transaction with the category name
+        cur.execute('INSERT INTO transactions (description, category, amount, date) VALUES (%s, %s, %s, %s)',
+                    (description, category, amount, date))
+        mysql.get_db().commit()
+        flash('Transaction added successfully')
+        return redirect(url_for('index'))
 
-@app.route('/update/<id>', methods = ['POST'])
-def update_cuenta(id):
+# Route to edit a transaction
+@app.route('/edit_transaction/<int:id>', methods=['GET', 'POST'])
+def edit_transaction(id):
+    cur = mysql.get_db().cursor()
     if request.method == 'POST':
-        id_cuenta = request.form['id_cuenta']
-        nombre_cuenta = request.form['nombre_cuenta']
-        tipo_cuenta = request.form['tipo_cuenta']
-        moneda_cuenta = request.form['moneda_cuenta']
-        saldo_inicial_cuenta = request.form['saldo_inicial_cuenta']
-        api_cuenta = request.form['api_cuenta']
+        description = request.form['description']
+        category = request.form['category']
+        amount = request.form['amount']
+        date = request.form['date']
 
-        # cur = mysql.get_db().cursor()
-        cur = conn.cursor()
         cur.execute("""
-            UPDATE cuentas
-            SET cuenta_id = %s,
-                cuenta_nombre = %s,
-                cuenta_tipo = %s,
-                cuenta_moneda = %s,
-                cuenta_saldo_inicial = %s,
-                cuenta_api = %s
-            WHERE cuenta_id = %s
-        """, (id_cuenta, nombre_cuenta, tipo_cuenta, moneda_cuenta, saldo_inicial_cuenta, api_cuenta, id))
-        flash('Cuenta actualizada satisfactoriamente')
-        return redirect(url_for('Index'))
+            UPDATE transactions
+            SET description = %s,
+                category = %s,
+                amount = %s,
+                date = %s
+            WHERE transaction_id = %s
+        """, (description, category, amount, date, id))
+        mysql.get_db().commit()
+        flash('Transaction updated successfully')
+        return redirect(url_for('index'))
+    else:
+        cur.execute("SELECT * FROM transactions WHERE transaction_id = %s", (id,))
+        transaction = cur.fetchone()
+        # Fetch categories
+        cur.execute('SELECT name FROM categories')
+        categories_data = cur.fetchall()
+        categories = [row[0] for row in categories_data]
+        return render_template('edit_transaction.html', transaction=transaction, categories=categories)
 
-@app.route('/delete/<string:id>')
-def delete_movement(id):
-    # cur = mysql.get_db().cursor()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM cuentas WHERE cuenta_id = '%s'"%(id))
-    flash('Cuenta eliminada satisfactoriamente')
-    return redirect(url_for('Index'))
+# Route to delete a transaction
+@app.route('/delete_transaction/<int:id>')
+def delete_transaction(id):
+    cur = mysql.get_db().cursor()
+    cur.execute("DELETE FROM transactions WHERE transaction_id = %s", (id,))
+    mysql.get_db().commit()
+    flash('Transaction deleted successfully')
+    return redirect(url_for('index'))
+
+# Route for Statistics
+@app.route('/statistics')
+def statistics():
+    cur = mysql.get_db().cursor()
+    # Query to get total amount spent per category
+    cur.execute("""
+        SELECT category, SUM(amount)
+        FROM transactions
+        GROUP BY category
+    """)
+    data = cur.fetchall()
+    # Prepare data for the chart
+    categories = [row[0] for row in data]
+    amounts = [float(row[1]) for row in data]
+    return render_template('statistics.html', categories=categories, amounts=amounts)
+
+# Routes to manage categories
+@app.route('/categories')
+def categories():
+    cur = mysql.get_db().cursor()
+    cur.execute('SELECT * FROM categories')
+    data = cur.fetchall()
+    return render_template('categories.html', categories=data)
+
+@app.route('/add_category', methods=['GET', 'POST'])
+def add_category():
+    if request.method == 'POST':
+        name = request.form['name']
+        cur = mysql.get_db().cursor()
+        cur.execute('INSERT INTO categories (name) VALUES (%s)', (name,))
+        mysql.get_db().commit()
+        flash('Category added successfully')
+        return redirect(url_for('categories'))
+    else:
+        return render_template('add_category.html')
+
+@app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
+def edit_category(id):
+    cur = mysql.get_db().cursor()
+    if request.method == 'POST':
+        name = request.form['name']
+        cur.execute("""
+            UPDATE categories
+            SET name = %s
+            WHERE category_id = %s
+        """, (name, id))
+        mysql.get_db().commit()
+        flash('Category updated successfully')
+        return redirect(url_for('categories'))
+    else:
+        cur.execute("SELECT * FROM categories WHERE category_id = %s", (id,))
+        data = cur.fetchone()
+        return render_template('edit_category.html', category=data)
+
+@app.route('/delete_category/<int:id>')
+def delete_category(id):
+    cur = mysql.get_db().cursor()
+    cur.execute("DELETE FROM categories WHERE category_id = %s", (id,))
+    mysql.get_db().commit()
+    flash('Category deleted successfully')
+    return redirect(url_for('categories'))
+
+# Route to get categories for autocomplete (JSON response)
+@app.route('/get_categories')
+def get_categories():
+    cur = mysql.get_db().cursor()
+    cur.execute('SELECT name FROM categories')
+    data = cur.fetchall()
+    categories = [row[0] for row in data]
+    return jsonify(categories)
 
 if __name__ == '__main__':
     port = os.environ.get("PORT", 5000)
-    app.run(debug = False, host = "0.0.0.0", port = port)
+    app.run(debug=False, host="0.0.0.0", port=port)
