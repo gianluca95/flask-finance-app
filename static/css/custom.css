@@ -1,0 +1,97 @@
+/* Custom CSS for Gastos App */
+
+/* General Background */
+body {
+    background-color: #f4f6f9;
+}
+
+/* Navbar */
+.navbar {
+    background-color: #007bff !important;
+    border-bottom: 2px solid #0056b3;
+}
+
+.navbar-brand,
+.navbar-nav .nav-link {
+    color: white !important;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffdd57 !important;
+}
+
+/* Content Container */
+.container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Tables */
+.table {
+    border: 1px solid #dee2e6;
+}
+
+.table thead th {
+    background-color: #007bff;
+    color: white;
+    border-bottom: 2px solid #0056b3;
+}
+
+.table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #e9ecef;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+.btn-primary:hover {
+    background-color: #004085;
+    border-color: #003366;
+}
+
+/* Links */
+a {
+    color: #007bff;
+}
+
+a:hover {
+    color: #0056b3;
+}
+
+/* Alerts */
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* Style for the suggestion box */
+#suggestion-box {
+    max-height: 200px; /* Limit height for overflow */
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#suggestion-box .list-group-item {
+    cursor: pointer;
+}
+
+#suggestion-box .list-group-item:hover {
+    background-color: #f0f0f0;
+}

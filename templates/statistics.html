@@ -1,57 +1,161 @@
 {% extends "layout.html" %}
 
 {% block body %}
-<h1 class="mb-4">Statistics</h1>
+<div class="container mt-4">
 
-<!-- Category Chart -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h5>Spending by Category</h5>
+    <!-- Filter Bar -->
+    <div class="mb-4">
+        <form method="GET" action="{{ url_for('statistics') }}" class="d-flex gap-2">
+            <select name="year" class="form-select" style="max-width: 100px;" onchange="this.form.submit()">
+                <option value="">Year</option>
+                {% for y in range(2020, 2026) %}
+                    <option value="{{ y }}" {% if y|string == year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="category" class="form-control" placeholder="Category" value="{{ category }}">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
     </div>
-    <div class="card-body">
-        <canvas id="categoryChart"></canvas>
-    </div>
-</div>
 
-<!-- Monthly Spending Chart -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h5>Monthly Spending</h5>
-    </div>
-    <div class="card-body">
-        <canvas id="monthlyChart"></canvas>
-    </div>
-</div>
-
-<!-- Monthly Spending Table -->
-<div class="card">
-    <div class="card-header">
-        <h5>Monthly Spending Details</h5>
-    </div>
-    <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Month</th>
-                    <th>Total Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for month, amount in monthly_data %}
+    <!-- Monthly Total Expenditure -->
+    <div class="row">
+        <div class="col-md-8">
+            <h4>Monthly Total Expenditure</h4>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Total Expenditure</th>
+                        <th>Gian</th>
+                        <th>Nati</th>
+                        <th>% Change vs Previous Month</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month, total, gian, nati, change in monthly_data %}
                     <tr>
                         <td>{{ month }}</td>
-                        <td>{{ "{:.2f}".format(amount) }}</td>
+                        <td>{{ "{:.2f}".format(total) }}</td>
+                        <td>{{ "{:.2f}".format(gian) }}</td>
+                        <td>{{ "{:.2f}".format(nati) }}</td>
+                        <td style="color: {% if change is not none and change > 0 %}red
+                                    {% elif change is not none and change < 0 %}green
+                                    {% else %}black{% endif %};">
+                            {{ "{:.2f}%".format(change) if change is not none else 'N/A' }}
+                        </td>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart -->
+        <div class="col-md-4">
+            <h4>Category Percentage Breakdown</h4>
+            <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
     </div>
+
+    <!-- Monthly Total Expenditure Per Category -->
+    <h4 class="mt-4">Monthly Total Expenditure Per Category</h4>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Category</th>
+                {% for month in unique_months %}
+                <th>{{ month }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in unique_categories %}
+            <tr>
+                <td>{{ category }}</td>
+                {% for month in unique_months %}
+                <td>{{ "{:.2f}".format(pivot_data[category][month]) }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Monthly Total Expenditure Per Category vs Previous Month -->
+    <h4 class="mt-4">Monthly Total Expenditure Per Category vs Previous Month</h4>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Category</th>
+                {% for month in unique_months %}
+                <th>{{ month }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in unique_categories %}
+            <tr>
+                <td>{{ category }}</td>
+                {% for month in unique_months %}
+                <td style="color: {% if monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] > 0 %}red
+                            {% elif monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] < 0 %}green
+                            {% else %}black{% endif %};">
+                    {{ "{:.2f}%".format(monthly_change_pivot[category][month]) if monthly_change_pivot[category][month] is not none else 'N/A' }}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 </div>
 
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<!-- Pie Chart Script -->
 <script>
-    // Existing Chart.js scripts for rendering charts
+    document.addEventListener('DOMContentLoaded', function () {
+        // Prepare data for the pie chart
+        var categories = {{ unique_categories | tojson }};
+        var percentages = categories.map(cat => {{ category_percentages | tojson }}[cat] || 0);
+
+        // Check if data exists
+        if (categories.length === 0 || percentages.reduce((a, b) => a + b, 0) === 0) {
+            console.error('No data available for the chart.');
+            return; // Stop if no data
+        }
+
+        // Generate random colors for the chart
+        var colors = categories.map(() => {
+            var r = Math.floor(Math.random() * 255);
+            var g = Math.floor(Math.random() * 255);
+            var b = Math.floor(Math.random() * 255);
+            return `rgba(${r}, ${g}, ${b}, 0.7)`;
+        });
+
+        // Get canvas context
+        var ctx = document.getElementById('categoryPieChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: percentages,
+                    backgroundColor: colors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Category Percentage Breakdown'
+                    }
+                }
+            }
+        });
+    });
 </script>
 {% endblock %}

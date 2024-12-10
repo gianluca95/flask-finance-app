@@ -3,27 +3,99 @@
 {% block body %}
 <div class="container mt-4">
     <h1>Edit Transaction</h1>
-    <form action="{{ url_for('edit_transaction', id=transaction[0]) }}" method="post">
+    <form action="{{ url_for('edit_transaction', id=transaction.transaction_id) }}" method="post">
+        <!-- Basic fields -->
         <div class="mb-3">
-            <label for="description" class="form-label">Description:</label>
-            <input type="text" name="description" class="form-control" value="{{ transaction[1] }}" required>
+            <label for="date" class="form-label">Date</label>
+            <input type="date" name="date" id="date" class="form-control" value="{{ transaction.transaction_date }}" required>
         </div>
         <div class="mb-3">
-            <label for="category" class="form-label">Category:</label>
-            <select name="category" id="category" class="form-control" required>
-                {% for category in categories %}
-                <option value="{{ category }}" {% if category == transaction[2] %}selected{% endif %}>{{ category }}</option>
+            <label for="category" class="form-label">Category</label>
+            <select name="category" id="category" class="form-select" required>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if cat == transaction.category_name %}selected{% endif %}>{{ cat }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="mb-3">
-            <label for="amount" class="form-label">Amount:</label>
-            <input type="number" step="0.01" name="amount" class="form-control" value="{{ transaction[3] }}" required>
+            <label for="description" class="form-label">Description</label>
+            <input type="text" name="description" class="form-control" value="{{ transaction.transaction_description }}" required>
         </div>
         <div class="mb-3">
-            <label for="date" class="form-label">Date:</label>
-            <input type="date" name="date" class="form-control" value="{{ transaction[4][:10] }}" required>
+            <label for="amount" class="form-label">Total Amount</label>
+            <input type="number" step="0.01" name="amount" id="total_amount" class="form-control" value="{{ transaction.transaction_total_amount }}" required>
         </div>
+
+        <!-- Hidden inputs to store state -->
+        <input type="hidden" name="custom_payment_split" id="custom_payment_split" value="{{ custom_payment_split }}">
+
+        <!-- Who Paid? -->
+        <h5>Who Paid?</h5>
+        <div class="mb-3">
+            <label class="form-label" for="primary_payer">Paid By</label>
+            <select name="primary_payer" id="primary_payer" class="form-select" required>
+                {% for person in people %}
+                    <option value="{{ person }}" {% if person == primary_payer %}selected{% endif %}>{{ person }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="default_payment_info" class="mb-3" {% if custom_payment_split == 'yes' %}style="display:none;"{% endif %}>
+            <p class="text-muted">Currently set to full amount paid by the selected person.</p>
+        </div>
+        <a href="#" id="toggle_payment_split" class="small">{% if custom_payment_split == 'yes' %}Hide custom payment split{% else %}Need a custom payment split?{% endif %}</a>
+
+        <div id="payment_split_fields" class="mt-3 {% if custom_payment_split == 'no' %}d-none{% endif %}">
+            <p>Adjust how much each person paid:</p>
+            {% for person in people %}
+            <div class="mb-3">
+                <label>{{ person }} Paid</label>
+                <input type="number" step="0.01" name="paid_amount_{{ person }}" class="form-control payer-amount"
+                       value="{{ transaction[person.lower() + '_paid_amount'] }}">
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Who Is Responsible? -->
+        <h5>Who Is Responsible?</h5>
+        <p class="text-muted">Default: 50/50 split. Change if needed.</p>
+        <div class="mb-3">
+            <div class="form-check">
+                <input type="radio" name="responsibility_option" id="equal_responsibility" value="equal" class="form-check-input"
+                       {% if responsibility_option == 'equal' %}checked{% endif %}>
+                <label class="form-check-label" for="equal_responsibility">Split Equally (50/50)</label>
+            </div>
+            <div class="form-check d-flex align-items-center mt-2">
+                <input type="radio" name="responsibility_option" id="single_responsibility" value="single" class="form-check-input me-2"
+                       {% if responsibility_option == 'single' %}checked{% endif %}>
+                <label for="single_responsibility" class="form-check-label me-2">All on</label>
+                <select name="single_responsible_person" id="single_responsible_person" class="form-select w-auto d-inline-block">
+                    {% for person in people %}
+                        <option value="{{ person }}" 
+                            {% if responsibility_option == 'single' and single_responsible_person == person %}selected{% endif %}>
+                            {{ person }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-check mt-2">
+                <input type="radio" name="responsibility_option" id="custom_responsibility" value="custom" class="form-check-input"
+                       {% if responsibility_option == 'custom' %}checked{% endif %}>
+                <label class="form-check-label" for="custom_responsibility">Custom Split</label>
+            </div>
+        </div>
+
+        <div id="custom_responsibility_fields" class="mt-3 {% if responsibility_option != 'custom' %}d-none{% endif %}">
+            <p>Specify how much each person is responsible for:</p>
+            {% for person in people %}
+            <div class="mb-3">
+                <label>{{ person }} Responsible</label>
+                <input type="number" step="0.01" name="responsible_amount_{{ person }}" class="form-control responsibility-amount"
+                       value="{{ transaction[person.lower() + '_responsible_amount'] }}">
+            </div>
+            {% endfor %}
+        </div>
+
         <button type="submit" class="btn btn-success">Update Transaction</button>
         <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Transactions</a>
     </form>
@@ -31,9 +103,7 @@
 
 <!-- Include jQuery and Select2 CSS and JS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
@@ -42,6 +112,55 @@ $(document).ready(function() {
         placeholder: 'Select a Category',
         allowClear: true
     });
+
+    const togglePaymentLink = document.getElementById('toggle_payment_split');
+    const paymentSplitFields = document.getElementById('payment_split_fields');
+    const customPaymentSplitInput = document.getElementById('custom_payment_split');
+    const defaultPaymentInfo = document.getElementById('default_payment_info');
+
+    togglePaymentLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (paymentSplitFields.classList.contains('d-none')) {
+            // Show custom fields
+            paymentSplitFields.classList.remove('d-none');
+            customPaymentSplitInput.value = 'yes';
+            defaultPaymentInfo.style.display = 'none';
+            togglePaymentLink.textContent = 'Hide custom payment split';
+        } else {
+            // Hide custom fields
+            paymentSplitFields.classList.add('d-none');
+            customPaymentSplitInput.value = 'no';
+            defaultPaymentInfo.style.display = 'block';
+            togglePaymentLink.textContent = 'Need a custom payment split?';
+        }
+    });
+
+    const equalRadio = document.getElementById('equal_responsibility');
+    const singleRadio = document.getElementById('single_responsibility');
+    const customRadio = document.getElementById('custom_responsibility');
+    const customFields = document.getElementById('custom_responsibility_fields');
+
+    [equalRadio, singleRadio, customRadio].forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (customRadio.checked) {
+                customFields.classList.remove('d-none');
+            } else {
+                customFields.classList.add('d-none');
+            }
+        });
+    });
 });
+</script>
+
+<script>
+    // Set the current date if needed (you may keep the existing date as is)
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     const dateInput = document.getElementById('date');
+    //     if(!dateInput.value){
+    //         const today = new Date();
+    //         const formattedDate = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    //         dateInput.value = formattedDate;
+    //     }
+    // });
 </script>
 {% endblock %}

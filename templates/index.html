@@ -1,82 +1,142 @@
 {% extends "layout.html" %}
 
 {% block body %}
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-    {% for message in messages %}
+<div class="container mt-4">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    {% endfor %}
-{% endif %}
-{% endwith %}
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
 
-<div class="row">
-    <!-- Add Transaction Form -->
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-header">
-                <h4>Add New Transaction</h4>
+    <h1>Add New Transaction</h1>
+
+    <form action="{{ url_for('add_transaction') }}" method="POST">
+        <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" name="date" id="date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="category_name" class="form-label">Category</label>
+            <select name="category_name" class="form-select" required>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" name="description" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="total_amount" class="form-label">Total Amount</label>
+            <input type="number" step="0.01" name="total_amount" id="total_amount" class="form-control" required>
+        </div>
+
+        <!-- Who Paid? -->
+        <h5>Who Paid?</h5>
+        <div class="mb-3">
+            <label class="form-label" for="primary_payer">Paid By</label>
+            <select name="primary_payer" id="primary_payer" class="form-select" required>
+                {% for person in people %}
+                <option value="{{ person }}">{{ person }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <input type="hidden" name="custom_payment_split" id="custom_payment_split" value="no">
+        <div id="default_payment_info" class="mb-3">
+            <p class="text-muted">Currently set to full amount paid by the selected person.</p>
+        </div>
+        <a href="#" id="toggle_payment_split" class="small">Need a custom payment split?</a>
+        <div id="payment_split_fields" class="d-none mt-3">
+            <p>Adjust how much each person paid:</p>
+            {% for person in people %}
+            <div class="mb-3">
+                <label>{{ person }} Paid</label>
+                <input type="number" step="0.01" name="paid_amount_{{ person }}" class="form-control payer-amount" value="0">
             </div>
-            <div class="card-body">
-                <form action="{{ url_for('add_transaction') }}" method="POST">
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <input type="text" name="description" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Category</label>
-                        <select name="category" id="category" class="form-select" required>
-                            <option value="" disabled selected>Select a Category</option>
-                            {% for category in categories %}
-                                <option value="{{ category }}">{{ category }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="amount" class="form-label">Amount</label>
-                        <input type="number" step="0.01" name="amount" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="date" class="form-label">Date</label>
-                        <input type="date" name="date" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Transaction</button>
-                </form>
+            {% endfor %}
+        </div>
+
+        <!-- Who Is Responsible? -->
+        <h5>Who Is Responsible?</h5>
+        <p class="text-muted">Default: 50/50 split. Change if needed.</p>
+        <div class="mb-3">
+            <div class="form-check">
+                <input type="radio" name="responsibility_option" id="equal_responsibility" value="equal" class="form-check-input" checked>
+                <label class="form-check-label" for="equal_responsibility">Split Equally (50/50)</label>
+            </div>
+            <div class="form-check d-flex align-items-center">
+                <input type="radio" name="responsibility_option" id="single_responsibility" value="single" class="form-check-input me-2">
+                <label for="single_responsibility" class="form-check-label me-2">All on</label>
+                <select name="single_responsible_person" id="single_responsible_person" class="form-select w-auto d-inline-block">
+                    {% for person in people %}
+                    <option value="{{ person }}">{{ person }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="responsibility_option" id="custom_responsibility" value="custom" class="form-check-input">
+                <label class="form-check-label" for="custom_responsibility">Custom Split</label>
             </div>
         </div>
-    </div>
 
-    <!-- Transactions Table -->
-    <div class="col-md-7">
-        <h4 class="mb-3">Transactions</h4>
-        <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transaction in transactions %}
-                    <tr>
-                        <td>{{ transaction[1] }}</td>
-                        <td>{{ transaction[2] }}</td>
-                        <td>{{ transaction[3] }}</td>
-                        <td>{{ transaction[4] }}</td>
-                        <td>
-                            <a href="{{ url_for('edit_transaction', id=transaction[0]) }}" class="btn btn-sm btn-warning">Edit</a>
-                            <a href="{{ url_for('delete_transaction', id=transaction[0]) }}" class="btn btn-sm btn-danger">Delete</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <div id="custom_responsibility_fields" class="d-none mt-3">
+            <p>Specify how much each person is responsible for:</p>
+            {% for person in people %}
+            <div class="mb-3">
+                <label>{{ person }} Responsible</label>
+                <input type="number" step="0.01" name="responsible_amount_{{ person }}" class="form-control responsibility-amount" value="0">
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Transaction</button>
+    </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePaymentLink = document.getElementById('toggle_payment_split');
+        const paymentSplitFields = document.getElementById('payment_split_fields');
+        const customPaymentSplitInput = document.getElementById('custom_payment_split');
+
+        togglePaymentLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (paymentSplitFields.classList.contains('d-none')) {
+                paymentSplitFields.classList.remove('d-none');
+                customPaymentSplitInput.value = 'yes';
+            } else {
+                paymentSplitFields.classList.add('d-none');
+                customPaymentSplitInput.value = 'no';
+            }
+        });
+
+        // Responsibility fields
+        const equalRadio = document.getElementById('equal_responsibility');
+        const singleRadio = document.getElementById('single_responsibility');
+        const customRadio = document.getElementById('custom_responsibility');
+        const customFields = document.getElementById('custom_responsibility_fields');
+
+        [equalRadio, singleRadio, customRadio].forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (customRadio.checked) {
+                    customFields.classList.remove('d-none');
+                } else {
+                    customFields.classList.add('d-none');
+                }
+            });
+        });
+
+        // Set the current date as the default value for the date input
+        const dateInput = document.getElementById('date');
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        dateInput.value = formattedDate;
+    });
+</script>
 {% endblock %}

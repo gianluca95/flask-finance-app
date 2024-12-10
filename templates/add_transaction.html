@@ -12,13 +12,14 @@
 
         <form action="{{ url_for('add_transaction') }}" method="post">
             <div class="mb-3">
-                <label for="description" class="form-label">Description:</label>
-                <input type="text" name="description" class="form-control" required>
-            </div>
-
-            <div class="mb-3">
                 <label for="category" class="form-label">Category:</label>
                 <input type="text" name="category" class="form-control" required>
+            </div>
+
+            <div class="mb-3 position-relative">
+                <label for="description" class="form-label">Description</label>
+                <input type="text" name="description" id="description" class="form-control" required autocomplete="off">
+                <ul id="suggestion-box" class="list-group position-absolute" style="z-index: 1000; display: none;"></ul>
             </div>
 
             <div class="mb-3">
