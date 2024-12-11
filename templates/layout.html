@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gastos App</title>
     <!-- Include Bootswatch Theme CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/minty/bootstrap.min.css">
@@ -38,8 +39,12 @@
 
     <!-- Content Block -->
     <div class="container mt-4 p-4 rounded shadow" style="background-color: #ffffff;">
-        {% block body %}
-        {% endblock %}
+        <div class="row">
+            <div class="col-12">
+                {% block body %}
+                {% endblock %}
+            </div>
+        </div>
     </div>
 
     <!-- Include Bootstrap JS -->
