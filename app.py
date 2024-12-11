@@ -28,7 +28,14 @@ user = os.environ.get("POSTGRES_USER")
 password = os.environ.get("POSTGRES_PASSWORD")
 dbname = os.environ.get("POSTGRES_DATABASE")
 
-connection = psycopg2.connect(host=host, user=user, password=password, dbname=dbname)
+keepalive_kwargs = {
+    "keepalives": 1,
+    "keepalives_idle": 30,
+    "keepalives_interval": 5,
+    "keepalives_count": 5,
+}
+
+connection = psycopg2.connect(host=host, user=user, password=password, dbname=dbname, **keepalive_kwargs)
 cur = connection.cursor()
 
 USERNAME = os.environ.get("APP_USER")
