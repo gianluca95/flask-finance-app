@@ -1,39 +1,42 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flaskext.mysql import MySQL
-import os
+# from flaskext.mysql import MySQL
+import psycopg2
 
 app = Flask(__name__)
 
 # Database configuration
-app.config['MYSQL_DATABASE_USER'] = 'admin'
-app.config['MYSQL_DATABASE_PASSWORD'] = '1234'
-app.config['MYSQL_DATABASE_DB'] = 'flask-app'
-app.config['MYSQL_DATABASE_HOST'] = '127.0.0.1'
+# app.config['MYSQL_DATABASE_USER'] = 'admin'
+# app.config['MYSQL_DATABASE_PASSWORD'] = '1234'
+# app.config['MYSQL_DATABASE_DB'] = 'flask-app'
+# app.config['MYSQL_DATABASE_HOST'] = '127.0.0.1'
 
-mysql = MySQL(app,
-              prefix="my_database",
-              host="127.0.0.1",
-              user="admin",
-              password="1234",
-              db="flask-app",
-              autocommit=True)
+# mysql = MySQL(app,
+#               prefix="my_database",
+#               host="127.0.0.1",
+#               user="admin",
+#               password="1234",
+#               db="flask-app",
+#               autocommit=True)
 
-mysql.init_app(app)
+# mysql.init_app(app)
 
 app.secret_key = 'mysecretkey'
 
+connection = psycopg2.connect(@POSTGRES_URL)
+cur = connection.cursor()
 
 @app.route('/')
 def index():
-    cur = mysql.get_db().cursor()
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
 
     # Fetch categories
-    cur.execute("SELECT category_name FROM categories")
+    cur.execute("""SELECT category_name FROM "flask-app-prd".categories""")
     categories_data = cur.fetchall()
     categories = [row[0] for row in categories_data]
 
     # Fetch people
-    cur.execute("SELECT person_name FROM people ORDER BY person_id")
+    cur.execute("""SELECT person_name FROM "flask-app-prd".people ORDER BY person_id""")
     people_data = cur.fetchall()
     people = [row[0] for row in people_data]
 
@@ -42,7 +45,8 @@ def index():
 
 @app.route('/transactions')
 def transactions():
-    cur = mysql.get_db().cursor()
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
 
     # Fetch transactions
     cur.execute("""
@@ -56,8 +60,8 @@ def transactions():
             t.nati_paid_amount,
             t.gian_responsible_amount,
             t.nati_responsible_amount
-        FROM transactions t
-        LEFT JOIN categories c ON t.category_id = c.category_id
+        FROM "flask-app-prd".transactions t
+        LEFT JOIN "flask-app-prd".categories c ON t.category_id = c.category_id
         ORDER BY t.transaction_date DESC
     """)
     transactions = cur.fetchall()
@@ -68,7 +72,8 @@ def transactions():
 
 @app.route('/add_transaction', methods=['POST'])
 def add_transaction():
-    cur = mysql.get_db().cursor()
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
 
     date = request.form['date']
     category_name = request.form['category_name']
@@ -76,11 +81,11 @@ def add_transaction():
     total_amount = float(request.form['total_amount'])
 
     # Get category_id
-    cur.execute("SELECT category_id FROM categories WHERE category_name = %s", (category_name,))
+    cur.execute("""SELECT category_id FROM "flask-app-prd".categories WHERE category_name = %s""", (category_name,))
     category_id = cur.fetchone()[0]
 
     # Get people
-    cur.execute("SELECT person_id, person_name FROM people ORDER BY person_id")
+    cur.execute("""SELECT person_id, person_name FROM "flask-app-prd".people ORDER BY person_id""")
     people_data = cur.fetchall()
     if len(people_data) != 2:
         flash("This example assumes exactly two people in the DB.", "danger")
@@ -122,7 +127,7 @@ def add_transaction():
 
     # Insert
     cur.execute("""
-        INSERT INTO transactions 
+        INSERT INTO "flask-app-prd".transactions 
         (transaction_date, category_id, transaction_description, transaction_total_amount,
          gian_paid_amount, nati_paid_amount, 
          gian_responsible_amount, nati_responsible_amount)
@@ -131,15 +136,16 @@ def add_transaction():
           gian_paid, nati_paid,
           gian_responsible, nati_responsible))
 
-    mysql.get_db().commit()
+    # mysql.get_db().commit()
     flash('Transaction added successfully!', 'success')
     return redirect(url_for('index'))
 
 
 @app.route('/edit_transaction/<int:id>', methods=['GET', 'POST'])
 def edit_transaction(id):
-    cur = mysql.get_db().cursor()
-    cur.execute("SELECT person_id, person_name FROM people ORDER BY person_id")
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
+    cur.execute("""SELECT person_id, person_name FROM "flask-app-prd".people ORDER BY person_id""")
     people_data = cur.fetchall()
     if len(people_data) != 2:
         flash("This example assumes exactly two people.", "danger")
@@ -154,7 +160,7 @@ def edit_transaction(id):
         description = request.form['description']
         amount = float(request.form['amount'])
 
-        cur.execute("SELECT category_id FROM categories WHERE category_name = %s", (category,))
+        cur.execute("""SELECT category_id FROM "flask-app-prd".categories WHERE category_name = %s""", (category,))
         category_id = cur.fetchone()[0]
 
         primary_payer_name = request.form['primary_payer']
@@ -189,7 +195,7 @@ def edit_transaction(id):
                 return redirect(url_for('edit_transaction', id=id))
 
         cur.execute("""
-            UPDATE transactions
+            UPDATE "flask-app-prd".transactions
             SET transaction_date = %s,
                 category_id = %s,
                 transaction_description = %s,
@@ -203,7 +209,7 @@ def edit_transaction(id):
               gian_paid, nati_paid,
               gian_responsible, nati_responsible,
               id))
-        mysql.get_db().commit()
+        # mysql.get_db().commit()
 
         flash('Transaction updated successfully!', 'success')
         return redirect(url_for('index'))
@@ -219,8 +225,8 @@ def edit_transaction(id):
                 t.nati_paid_amount,
                 t.gian_responsible_amount,
                 t.nati_responsible_amount
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.category_id
+            FROM "flask-app-prd".transactions t
+            LEFT JOIN "flask-app-prd".categories c ON t.category_id = c.category_id
             WHERE t.transaction_id = %s
         """, (id,))
         row = cur.fetchone()
@@ -270,11 +276,11 @@ def edit_transaction(id):
             responsibility_option = 'custom'
             single_responsible_person = None
 
-        cur.execute("SELECT category_name FROM categories")
+        cur.execute("""SELECT category_name FROM "flask-app-prd".categories""")
         categories_data = cur.fetchall()
         categories = [row[0] for row in categories_data]
 
-        cur.execute("SELECT person_name FROM people ORDER BY person_id")
+        cur.execute("""SELECT person_name FROM "flask-app-prd".people ORDER BY person_id""")
         p_data = cur.fetchall()
         people = [r[0] for r in p_data]
 
@@ -290,16 +296,18 @@ def edit_transaction(id):
 
 @app.route('/delete_transaction/<int:id>')
 def delete_transaction(id):
-    cur = mysql.get_db().cursor()
-    cur.execute("DELETE FROM transactions WHERE transaction_id = %s", (id,))
-    mysql.get_db().commit()
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
+    cur.execute("""DELETE FROM "flask-app-prd".transactions WHERE transaction_id = %s""", (id,))
+    # mysql.get_db().commit()
     flash('Transaction deleted successfully')
     return redirect(url_for('index'))
 
 
 @app.route('/statistics', methods=['GET', 'POST'])
 def statistics():
-    cur = mysql.get_db().cursor()
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
 
     # Get filters
     year = request.args.get('year', '').strip()
@@ -327,7 +335,7 @@ def statistics():
                SUM(transaction_total_amount) AS total,
                SUM(gian_paid_amount) AS gian_expense,
                SUM(nati_paid_amount) AS nati_expense
-        FROM transactions
+        FROM "flask-app-prd".transactions
         {where_clause}
         GROUP BY month
         ORDER BY month
@@ -343,8 +351,8 @@ def statistics():
         SELECT DATE_FORMAT(transaction_date, '%Y-%m') AS month,
                c.category_name AS category,
                SUM(transaction_total_amount) AS total
-        FROM transactions t
-        LEFT JOIN categories c ON t.category_id = c.category_id
+        FROM "flask-app-prd".transactions t
+        LEFT JOIN "flask-app-prd".categories c ON t.category_id = c.category_id
         {where_clause}{category_condition}
         GROUP BY month, category
         ORDER BY category, month
@@ -419,8 +427,9 @@ def statistics():
 
 @app.route('/categories')
 def categories():
-    cur = mysql.get_db().cursor()
-    cur.execute("SELECT category_id, category_name FROM categories")
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
+    cur.execute("""SELECT category_id, category_name FROM "flask-app-prd".categories""")
     data = cur.fetchall()
     return render_template('categories.html', categories=data)
 
@@ -429,9 +438,10 @@ def categories():
 def add_category():
     if request.method == 'POST':
         name = request.form['name']
-        cur = mysql.get_db().cursor()
-        cur.execute('INSERT INTO categories (category_name) VALUES (%s)', (name,))
-        mysql.get_db().commit()
+        # cur = mysql.get_db().cursor()
+        cur = connection.cursor()
+        cur.execute("""INSERT INTO "flask-app-prd".categories (category_name) VALUES (%s)""", (name,))
+        # mysql.get_db().commit()
         flash('Category added successfully')
         return redirect(url_for('categories'))
     else:
@@ -440,11 +450,12 @@ def add_category():
 
 @app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
 def edit_category(id):
-    cur = mysql.get_db().cursor()
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
     if request.method == 'POST':
         name = request.form['name']
         cur.execute("""
-            UPDATE categories
+            UPDATE "flask-app-prd".categories
             SET category_name = %s
             WHERE category_id = %s
         """, (name, id))
@@ -452,15 +463,16 @@ def edit_category(id):
         flash('Category updated successfully')
         return redirect(url_for('categories'))
     else:
-        cur.execute("SELECT * FROM categories WHERE category_id = %s", (id,))
+        cur.execute("""SELECT * FROM "flask-app-prd".categories WHERE category_id = %s""", (id,))
         data = cur.fetchone()
         return render_template('edit_category.html', category=data)
 
 
 @app.route('/delete_category/<int:id>')
 def delete_category(id):
-    cur = mysql.get_db().cursor()
-    cur.execute("DELETE FROM categories WHERE category_id = %s", (id,))
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
+    cur.execute("""DELETE FROM "flask-app-prd".categories WHERE category_id = %s""", (id,))
     mysql.get_db().commit()
     flash('Category deleted successfully')
     return redirect(url_for('categories'))
@@ -468,8 +480,9 @@ def delete_category(id):
 
 @app.route('/get_categories')
 def get_categories():
-    cur = mysql.get_db().cursor()
-    cur.execute('SELECT category_name FROM categories')
+    # cur = mysql.get_db().cursor()
+    cur = connection.cursor()
+    cur.execute("""SELECT category_name FROM "flask-app-prd".categories""")
     data = cur.fetchall()
     categories = [row[0] for row in data]
     return jsonify(categories)
