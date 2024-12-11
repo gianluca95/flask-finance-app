@@ -22,7 +22,7 @@ app = Flask(__name__)
 
 app.secret_key = 'mysecretkey'
 
-connection = psycopg2.connect(@POSTGRES_URL)
+connection = psycopg2.connect("@POSTGRES_URL")
 cur = connection.cursor()
 
 @app.route('/')
