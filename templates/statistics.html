@@ -25,20 +25,20 @@
                 <thead>
                     <tr>
                         <th>Month</th>
-                        <th>Total Expenditure</th>
-                        <th>Gian</th>
-                        <th>Nati</th>
-                        <th>% Change vs Previous Month</th>
+                        <th class="text-end">Total Expenditure</th>
+                        <th class="text-end">Gian</th>
+                        <th class="text-end">Nati</th>
+                        <th class="text-end">% Change vs Previous Month</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for month, total, gian, nati, change in monthly_data %}
                     <tr>
                         <td>{{ month }}</td>
-                        <td>{{ "{:.2f}".format(total) }}</td>
-                        <td>{{ "{:.2f}".format(gian) }}</td>
-                        <td>{{ "{:.2f}".format(nati) }}</td>
-                        <td style="color: {% if change is not none and change > 0 %}red
+                        <td class="text-end">{{ "{:.2f}".format(total) }}</td>
+                        <td class="text-end">{{ "{:.2f}".format(gian) }}</td>
+                        <td class="text-end">{{ "{:.2f}".format(nati) }}</td>
+                        <td class="text-end" style="color: {% if change is not none and change > 0 %}red
                                     {% elif change is not none and change < 0 %}green
                                     {% else %}black{% endif %};">
                             {{ "{:.2f}%".format(change) if change is not none else 'N/A' }}
@@ -65,7 +65,7 @@
             <tr>
                 <th>Category</th>
                 {% for month in unique_months %}
-                <th>{{ month }}</th>
+                <th class="text-end">{{ month }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -74,7 +74,7 @@
             <tr>
                 <td>{{ category }}</td>
                 {% for month in unique_months %}
-                <td>{{ "{:.2f}".format(pivot_data[category][month]) }}</td>
+                <td class="text-end">{{ "{:.2f}".format(pivot_data[category][month]) }}</td>
                 {% endfor %}
             </tr>
             {% endfor %}
@@ -88,7 +88,7 @@
             <tr>
                 <th>Category</th>
                 {% for month in unique_months %}
-                <th>{{ month }}</th>
+                <th class="text-end">{{ month }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -97,7 +97,7 @@
             <tr>
                 <td>{{ category }}</td>
                 {% for month in unique_months %}
-                <td style="color: {% if monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] > 0 %}red
+                <td class="text-end" style="color: {% if monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] > 0 %}red
                             {% elif monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] < 0 %}green
                             {% else %}black{% endif %};">
                     {{ "{:.2f}%".format(monthly_change_pivot[category][month]) if monthly_change_pivot[category][month] is not none else 'N/A' }}
