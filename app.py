@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 # from flaskext.mysql import MySQL
 import psycopg2
+import os
 
 app = Flask(__name__)
 
@@ -22,7 +23,12 @@ app = Flask(__name__)
 
 app.secret_key = 'mysecretkey'
 
-connection = psycopg2.connect(host="@POSTGRES_HOST", user="@POSTGRES_USER", password="@POSTGRES_PASSWORD", dbname="@POSTGRES_DATABASE")
+host = os.environ.get("POSTGRES_HOST")
+user = os.environ.get("POSTGRES_USER")
+password = os.environ.get("POSTGRES_PASSWORD")
+dbname = os.environ.get("POSTGRES_DATABASE")
+
+connection = psycopg2.connect(host=host, user=user, password=password, dbname=dbname)
 cur = connection.cursor()
 
 @app.route('/')
