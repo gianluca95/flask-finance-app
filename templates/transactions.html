@@ -4,38 +4,40 @@
 <div class="container mt-4">
     <h1>All Transactions</h1>
 
-    <table class="table table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Total</th>
-                <th>Gian Paid</th>
-                <th>Nati Paid</th>
-                <th>Gian Resp.</th>
-                <th>Nati Resp.</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for transaction in transactions %}
-            <tr>
-                <td>{{ transaction[1] }}</td>
-                <td>{{ transaction[2] }}</td>
-                <td>{{ transaction[3] }}</td>
-                <td>{{ "{:.2f}".format(transaction[4]) }}</td>
-                <td>{{ "{:.2f}".format(transaction[5]) }}</td>
-                <td>{{ "{:.2f}".format(transaction[6]) }}</td>
-                <td>{{ "{:.2f}".format(transaction[7]) }}</td>
-                <td>{{ "{:.2f}".format(transaction[8]) }}</td>
-                <td>
-                    <a href="{{ url_for('edit_transaction', id=transaction[0]) }}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{{ url_for('delete_transaction', id=transaction[0]) }}" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive"> <!-- Add this wrapper -->
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Total</th>
+                    <th>Gian Paid</th>
+                    <th>Nati Paid</th>
+                    <th>Gian Resp.</th>
+                    <th>Nati Resp.</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction[1] }}</td>
+                    <td>{{ transaction[2] }}</td>
+                    <td>{{ transaction[3] }}</td>
+                    <td>{{ "{:.2f}".format(transaction[4]) }}</td>
+                    <td>{{ "{:.2f}".format(transaction[5]) }}</td>
+                    <td>{{ "{:.2f}".format(transaction[6]) }}</td>
+                    <td>{{ "{:.2f}".format(transaction[7]) }}</td>
+                    <td>{{ "{:.2f}".format(transaction[8]) }}</td>
+                    <td>
+                        <a href="{{ url_for('edit_transaction', id=transaction[0]) }}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{{ url_for('delete_transaction', id=transaction[0]) }}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
