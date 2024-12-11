@@ -35,19 +35,20 @@
                     {% for month, total, gian, nati, change in monthly_data %}
                     <tr>
                         <td>{{ month }}</td>
-                        <td class="text-end">{{ "{:.2f}".format(total) }}</td>
-                        <td class="text-end">{{ "{:.2f}".format(gian) }}</td>
-                        <td class="text-end">{{ "{:.2f}".format(nati) }}</td>
+                        <td class="text-end">{{ total|round|int }}</td>
+                        <td class="text-end">{{ gian|round|int }}</td>
+                        <td class="text-end">{{ nati|round|int }}</td>
                         <td class="text-end" style="color: {% if change is not none and change > 0 %}red
                                     {% elif change is not none and change < 0 %}green
                                     {% else %}black{% endif %};">
-                            {{ "{:.2f}%".format(change) if change is not none else 'N/A' }}
+                            {{ change|round if change is not none else 'N/A' }}%
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
 
         <!-- Chart -->
         <div class="col-md-4">
@@ -74,7 +75,7 @@
             <tr>
                 <td>{{ category }}</td>
                 {% for month in unique_months %}
-                <td class="text-end">{{ "{:.2f}".format(pivot_data[category][month]) }}</td>
+                <td class="text-end">{{ pivot_data[category][month]|round|int }}</td>
                 {% endfor %}
             </tr>
             {% endfor %}
@@ -100,7 +101,7 @@
                 <td class="text-end" style="color: {% if monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] > 0 %}red
                             {% elif monthly_change_pivot[category][month] is not none and monthly_change_pivot[category][month] < 0 %}green
                             {% else %}black{% endif %};">
-                    {{ "{:.2f}%".format(monthly_change_pivot[category][month]) if monthly_change_pivot[category][month] is not none else 'N/A' }}
+                    {{ monthly_change_pivot[category][month]|round if monthly_change_pivot[category][month] is not none else 'N/A' }}%
                 </td>
                 {% endfor %}
             </tr>
