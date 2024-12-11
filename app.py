@@ -452,19 +452,6 @@ def statistics():
                 monthly_change_pivot[category][month] = change
             previous_month = month
 
-    # Calculate total expenditure across all categories for the pie chart
-    total_expenditure = sum(
-        sum(month_data.values()) for month_data in pivot_data.values()
-    )
-
-    # Calculate percentage breakdown for each category
-    category_percentages = {
-        category: (
-            sum(month_data.values()) / total_expenditure * 100
-            if total_expenditure > 0 else 0
-        )
-        for category, month_data in pivot_data.items()
-    }
 
     # Render the data to the template
     return render_template(
@@ -476,7 +463,6 @@ def statistics():
         monthly_change_pivot=monthly_change_pivot,
         year=year,
         category=category,
-        category_percentages=category_percentages,  # For the pie chart
     )
 
 

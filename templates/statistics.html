@@ -50,15 +50,6 @@
         </div>
     </div>
 
-        <!-- Chart -->
-        <div class="col-md-4">
-            <h4>Category Percentage Breakdown</h4>
-            <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
-                <canvas id="categoryPieChart"></canvas>
-            </div>
-        </div>
-    </div>
-
     <!-- Monthly Total Expenditure Per Category -->
     <h4 class="mt-4">Monthly Total Expenditure Per Category</h4>
     <table class="table table-bordered table-striped">
@@ -110,53 +101,4 @@
     </table>
 
 </div>
-
-<!-- Pie Chart Script -->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Prepare data for the pie chart
-        var categories = {{ unique_categories | tojson }};
-        var percentages = categories.map(cat => {{ category_percentages | tojson }}[cat] || 0);
-
-        // Check if data exists
-        if (categories.length === 0 || percentages.reduce((a, b) => a + b, 0) === 0) {
-            console.error('No data available for the chart.');
-            return; // Stop if no data
-        }
-
-        // Generate random colors for the chart
-        var colors = categories.map(() => {
-            var r = Math.floor(Math.random() * 255);
-            var g = Math.floor(Math.random() * 255);
-            var b = Math.floor(Math.random() * 255);
-            return `rgba(${r}, ${g}, ${b}, 0.7)`;
-        });
-
-        // Get canvas context
-        var ctx = document.getElementById('categoryPieChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: categories,
-                datasets: [{
-                    data: percentages,
-                    backgroundColor: colors
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Category Percentage Breakdown'
-                    }
-                }
-            }
-        });
-    });
-</script>
 {% endblock %}
