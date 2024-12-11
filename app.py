@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 # from flaskext.mysql import MySQL
 import psycopg2
 import os
@@ -31,7 +31,45 @@ dbname = os.environ.get("POSTGRES_DATABASE")
 connection = psycopg2.connect(host=host, user=user, password=password, dbname=dbname)
 cur = connection.cursor()
 
+USERNAME = "admin"
+PASSWORD = "1234"
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if username == USERNAME and password == PASSWORD:
+            session['logged_in'] = True
+            flash("Login successful!", "success")
+            return redirect(url_for('index'))
+        else:
+            flash("Invalid username or password.", "danger")
+    return render_template('login.html')
+
+
+# Logout route
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash("You have been logged out.", "info")
+    return redirect(url_for('login'))
+
+
+# Protect routes
+def login_required(f):
+    def wrapper(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash("Please log in to access this page.", "danger")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+
 @app.route('/')
+@login_required
 def index():
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -50,6 +88,7 @@ def index():
 
 
 @app.route('/transactions')
+@login_required
 def transactions():
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -77,6 +116,7 @@ def transactions():
 
 
 @app.route('/add_transaction', methods=['POST'])
+@login_required
 def add_transaction():
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -148,6 +188,7 @@ def add_transaction():
 
 
 @app.route('/edit_transaction/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_transaction(id):
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -301,6 +342,7 @@ def edit_transaction(id):
 
 
 @app.route('/delete_transaction/<int:id>')
+@login_required
 def delete_transaction(id):
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -311,6 +353,7 @@ def delete_transaction(id):
 
 
 @app.route('/statistics', methods=['GET', 'POST'])
+@login_required
 def statistics():
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -432,6 +475,7 @@ def statistics():
 
 
 @app.route('/categories')
+@login_required
 def categories():
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -441,6 +485,7 @@ def categories():
 
 
 @app.route('/add_category', methods=['GET', 'POST'])
+@login_required
 def add_category():
     if request.method == 'POST':
         name = request.form['name']
@@ -455,6 +500,7 @@ def add_category():
 
 
 @app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_category(id):
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -475,6 +521,7 @@ def edit_category(id):
 
 
 @app.route('/delete_category/<int:id>')
+@login_required
 def delete_category(id):
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
@@ -485,6 +532,7 @@ def delete_category(id):
 
 
 @app.route('/get_categories')
+@login_required
 def get_categories():
     # cur = mysql.get_db().cursor()
     cur = connection.cursor()
