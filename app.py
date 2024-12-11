@@ -388,9 +388,9 @@ def statistics():
     # Query 1: Monthly Total Expenditure with Gian/Nati breakdown
     query_monthly_total = f"""
         SELECT TO_CHAR(transaction_date, 'yyyy-mm') AS month,
-               SUM(transaction_total_amount) AS total,
-               SUM(gian_paid_amount) AS gian_expense,
-               SUM(nati_paid_amount) AS nati_expense
+               ROUND(SUM(transaction_total_amount)) AS total,
+               ROUND(SUM(gian_paid_amount)) AS gian_expense,
+               ROUND(SUM(nati_paid_amount)) AS nati_expense
         FROM "flask-app-prd".transactions
         {where_clause}
         GROUP BY month
@@ -406,7 +406,7 @@ def statistics():
     query_monthly_category = f"""
         SELECT TO_CHAR(transaction_date, 'yyyy-mm') AS month,
                c.category_name AS category,
-               SUM(transaction_total_amount) AS total
+               ROUND(SUM(transaction_total_amount)) AS total
         FROM "flask-app-prd".transactions t
         LEFT JOIN "flask-app-prd".categories c ON t.category_id = c.category_id
         {where_clause}{category_condition}
