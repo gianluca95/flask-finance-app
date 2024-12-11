@@ -31,8 +31,8 @@ dbname = os.environ.get("POSTGRES_DATABASE")
 connection = psycopg2.connect(host=host, user=user, password=password, dbname=dbname)
 cur = connection.cursor()
 
-USERNAME = "admin"
-PASSWORD = "1234"
+USERNAME = os.environ.get("APP_USER")
+PASSWORD = os.environ.get("APP_PASSWORD")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
